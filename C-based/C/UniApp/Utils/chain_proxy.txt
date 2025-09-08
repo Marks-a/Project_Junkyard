@@ -1,0 +1,162 @@
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <iostream>
+#include <vector>
+#include <string>
+#include <thread>
+
+#pragma comment(lib, "Ws2_32.lib")
+
+struct Proxy {
+    std::string host;
+    int port;
+};
+
+// Forward request through a chain of proxies
+bool ForwardThroughChain(const std::vector<Proxy>& chain, SOCKET clientSocket, const std::string& initialRequest) {
+    SOCKET sock = INVALID_SOCKET;
+
+    for (size_t i = 0; i < chain.size(); i++) {
+        sock = socket(AF_INET, SOCK_STREAM, 0);
+        if (sock == INVALID_SOCKET) {
+            std::cerr << "Socket creation failed for proxy" << std::endl;
+            return false;
+        }
+
+        sockaddr_in addr{};
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(chain[i].port);
+        inet_pton(AF_INET, chain[i].host.c_str(), &addr.sin_addr);
+
+        if (connect(sock, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR) {
+            std::cerr << "Failed to connect to proxy " << chain[i].host << ":" << chain[i].port << std::endl;
+            closesocket(sock);
+            return false;
+        }
+
+        if (i == chain.size() - 1) {
+            // Last proxy → send the browser request
+            send(sock, initialRequest.c_str(), (int)initialRequest.size(), 0);
+        } else {
+            // Intermediate proxy → CONNECT to the next one
+            std::string connectReq = "CONNECT " + chain[i+1].host + ":" + std::to_string(chain[i+1].port) + " HTTP/1.1\r\n\r\n";
+            send(sock, connectReq.c_str(), (int)connectReq.size(), 0);
+
+            char resp[1024];
+            int len = recv(sock, resp, sizeof(resp)-1, 0);
+            if (len <= 0 || std::string(resp, len).find("200") == std::string::npos) {
+                std::cerr << "CONNECT failed at proxy " << chain[i].host << std::endl;
+                closesocket(sock);
+                return false;
+            }
+        }
+    }
+
+    // Relay loop (browser <-> last proxy)
+    fd_set readfds;
+    char buffer[4096];
+    while (true) {
+        FD_ZERO(&readfds);
+        FD_SET(clientSocket, &readfds);
+        FD_SET(sock, &readfds);
+
+        int maxSock = (clientSocket > sock ? clientSocket : sock) + 1;
+        int activity = select(maxSock, &readfds, nullptr, nullptr, nullptr);
+
+        if (activity == SOCKET_ERROR) break;
+
+        if (FD_ISSET(clientSocket, &readfds)) {
+            int bytes = recv(clientSocket, buffer, sizeof(buffer), 0);
+            if (bytes <= 0) break;
+            send(sock, buffer, bytes, 0);
+        }
+
+        if (FD_ISSET(sock, &readfds)) {
+            int bytes = recv(sock, buffer, sizeof(buffer), 0);
+            if (bytes <= 0) break;
+            send(clientSocket, buffer, bytes, 0);
+        }
+    }
+
+    closesocket(sock);
+    return true;
+}
+
+void HandleClient(SOCKET clientSocket, const std::vector<Proxy>& chain) {
+    char buffer[4096];
+    int bytesReceived = recv(clientSocket, buffer, sizeof(buffer)-1, 0);
+    if (bytesReceived > 0) {
+        buffer[bytesReceived] = '\0';
+        std::string request(buffer);
+        std::cout << "Browser Request:\n" << request << std::endl;
+
+        ForwardThroughChain(chain, clientSocket, request);
+    }
+    closesocket(clientSocket);
+}
+
+
+
+
+
+
+
+// Local proxy listener
+void StartLocalProxy(int port, const std::vector<Proxy>& chain) {
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
+        std::cerr << "WSAStartup failed\n";
+        return;
+    }
+
+    SOCKET listenSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (listenSocket == INVALID_SOCKET) {
+        std::cerr << "Socket creation failed\n";
+        WSACleanup();
+        return;
+    }
+
+    sockaddr_in serverAddr{};
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(port);
+    inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
+
+    if (bind(listenSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
+        std::cerr << "Bind failed\n";
+        closesocket(listenSocket);
+        WSACleanup();
+        return;
+    }
+
+    if (listen(listenSocket, SOMAXCONN) == SOCKET_ERROR) {
+        std::cerr << "Listen failed\n";
+        closesocket(listenSocket);
+        WSACleanup();
+        return;
+    }
+
+    std::cout << "Local proxy started at 127.0.0.1:" << port << std::endl;
+
+    while (true) {
+        SOCKET clientSocket = accept(listenSocket, nullptr, nullptr);
+        if (clientSocket == INVALID_SOCKET) {
+            std::cerr << "Accept failed\n";
+            break;
+        }
+        std::thread(HandleClient, clientSocket, chain).detach();
+    }
+
+    closesocket(listenSocket);
+    WSACleanup();
+}
+
+int main() {
+    // Example proxy chain (replace with real proxies)
+    std::vector<Proxy> chain = {
+        {"192.168.1.100", 3128},  // Proxy #1
+        {"203.0.113.50", 8080}    // Proxy #2
+    };
+
+    StartLocalProxy(8080, chain);
+    return 0;
+}

@@ -1,0 +1,52 @@
+#!/bin/bash
+# This script creates 3 Linux network namespaces (pc1, pc2, pc3),
+# each with two virtual Ethernet interfaces:
+#   - eth0 in subnet 10.0.X.0/24
+#   - wlan0 in subnet 192.168.X.0/24
+# Each gets a unique MAC address.
+# Namespaces are connected so broadcasts will be visible between matching subnets.
+
+set -e
+
+# Cleanup any old setup
+for ns in pc1 pc2 pc3; do
+    ip netns del $ns 2>/dev/null || true
+done
+
+# Function to create namespace with two veths
+# Arguments: <nsname> <id> (id used in IP/MAC)
+make_ns() {
+    local NS=$1
+    local ID=$2
+
+    ip netns add $NS
+
+    # Create veth pair for eth0
+    ip link add ${NS}_eth0 type veth peer name eth0 netns $NS
+    ip addr add 10.0.${ID}.1/24 dev ${NS}_eth0
+    ip link set ${NS}_eth0 up
+    ip netns exec $NS ip addr add 10.0.${ID}.2/24 dev eth0
+    ip netns exec $NS ip link set eth0 address 02:aa:bb:cc:dd:${ID}1
+    ip netns exec $NS ip link set eth0 up
+
+    # Create veth pair for wlan0
+    ip link add ${NS}_wlan0 type veth peer name wlan0 netns $NS
+    ip addr add 192.168.${ID}.1/24 dev ${NS}_wlan0
+    ip link set ${NS}_wlan0 up
+    ip netns exec $NS ip addr add 192.168.${ID}.2/24 dev wlan0
+    ip netns exec $NS ip link set wlan0 address 02:aa:bb:cc:dd:${ID}2
+    ip netns exec $NS ip link set wlan0 up
+
+    # Bring loopback up inside namespace
+    ip netns exec $NS ip link set lo up
+}
+
+# Create 3 namespaces with IDs 1, 2, 3
+make_ns pc1 1
+make_ns pc2 2
+make_ns pc3 3
+
+echo "=== Setup complete ==="
+echo "Namespaces: pc1, pc2, pc3"
+echo "Each has eth0 in 10.0.X.0/24 and wlan0 in 192.168.X.0/24"
+echo "Run inside a namespace with: ip netns exec pc1 bash"

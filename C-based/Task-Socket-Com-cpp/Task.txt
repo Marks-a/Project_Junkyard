@@ -1,0 +1,138 @@
+We are building two programs:
+
+	The Service (service.cpp)
+
+Runs in the background (but started manually from CLI).
+
+Keeps track of neighbors = other machines on the same subnet running the same service.
+
+Detects neighbors by exchanging HELLO messages over UDP broadcast.
+
+Maintains an Active Neighbor List = neighbors seen in the last 30 seconds.
+
+	The CLI Tool (cli.cpp)
+
+Runs on demand from CLI.
+
+Connects to the service (probably via a local UNIX domain socket).
+
+Asks for the current Active Neighbor List.
+
+Prints for each neighbor: IP address | MAC address.
+
+
+==============================================
+Get my own network interfaces
+
+Collect my IP + MAC addresses for each interface (we already wrote code for this).
+
+Send HELLO messages
+
+Every few seconds, broadcast:
+
+php-template
+Copy code
+HELLO <IP> <MAC>
+Send to the local subnet (255.255.255.255) on a fixed UDP port (e.g. 50000).
+
+Receive HELLO messages
+
+Listen on the same UDP port.
+
+When a HELLO is received:
+
+Parse it → extract IP + MAC.
+
+Check if the sender is in the same subnet.
+
+Update neighbor list with “last seen = now”.
+
+Maintain the Active Neighbor List
+
+Store neighbors in memory as:
+
+Copy code
+{IP, MAC, last_seen_timestamp}
+Periodically clean up: remove entries older than 30 seconds.
+
+Provide neighbor list to CLI
+
+Service listens on a UNIX domain socket (local-only).
+
+When CLI connects and requests list:
+
+Service sends all active neighbors back.
+
+#############################################
+
+
+Connect to the service’s UNIX domain socket.
+
+Request the list of active neighbors.
+
+Read the list and print:
+
+yaml
+Copy code
+IP: 192.168.1.42 | MAC: 3c:97:0e:4a:b1:c2
+IP: 192.168.1.43 | MAC: 00:11:22:33:44:55
+Exit.
+
+''''''''''''''''''''''''''''''''''''''''''''''''''
+
+No threads → Service must use select() or non-blocking I/O to handle sending HELLO, receiving HELLO, and serving CLI requests in a single loop.
+
+No exceptions → Use plain C++ error handling (if (...) { perror(); }).
+
+No external tools → Must gather IP/MAC addresses via getifaddrs and ioctl, not by running ifconfig or ip.
+
+Ubuntu LTS → Should build/run cleanly with g++ on current Ubuntu.
+
+Efficiency not critical → Simplicity of design is okay.
+
+//////////////////////////////////////
+Start ./service manually in a terminal.
+
+It discovers local IP/MAC.
+
+Starts sending and receiving HELLOs.
+
+Keeps neighbor table alive.
+
+Listens for CLI requests.
+
+On another terminal, run ./cli.
+
+Connects to the service via UNIX socket.
+
+Gets the neighbor list.
+
+Prints it and exits.
+
+If another machine runs the service on the same subnet:
+
+They exchange HELLOs.
+
+Each adds the other to its neighbor list.
+
+CLI on either machine shows the other as a neighbor.
+
+
+
+
+
++++++++++++++++++
++++++++++++++++++
+Original text:
+you need to write a background service for the device (the computer that is running the service)
+searches on connected local networks for neighbors running the same service
+a pair of service-powered devices that have one of the IP addresses from a shared IP subnet are considered neighbors
+the service should note that the device may have multiple network interfaces (multiple connected local area networks)
+service should note that the IP addresses of the device can change dynamically
+the service maintains a list of active neighbors, an active neighbor known to have operated the service no earlier than 30 SEC ago
+write a cli program that retrieves a list of active neighbors from the service, the IP address and MAC address for each neighbor to display.
+effectiveness not decisive, choice of protocols used - free to use g + + with stdc + + library, make
+cannot use threads and expressions
+service and cli program must run on an up-to-date version of Ubuntu LTS, service run manually from cli
+service and cli cannot use (run) other tools/programs available in the system
+for testing, we recommend using a libvirt/virt-manager-based VM network with at least 3 VM (at least one VM with 2 network interfaces)

@@ -1,0 +1,2 @@
+This is file is a test for AES128 encryption in Java.
+Here some text to help with a the amount of a txt file can have.
