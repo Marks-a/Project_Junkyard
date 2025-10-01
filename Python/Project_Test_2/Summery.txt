@@ -1,0 +1,7 @@
+cd infra
+terraform init
+terraform apply -var="bucket_name=ml-platform-data-1234"
+
+python scripts/upload_csv.py <bucket_name> ./data/train.csv train/data.csv
+
+python app/train_and_deploy.py

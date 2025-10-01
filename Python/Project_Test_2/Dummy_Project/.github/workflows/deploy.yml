@@ -1,0 +1,35 @@
+name: ML Platform CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'infra/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: us-east-1
+      BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+      SAGEMAKER_ROLE_ARN: ${{ secrets.SAGEMAKER_ROLE_ARN }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.10
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install boto3 sagemaker pandas scikit-learn joblib
+
+    - name: Upload CSV to S3
+      run: python scripts/upload_csv.py $BUCKET_NAME ./data/train.csv train/data.csv
+
+    - name: Train & deploy model
+      run: python app/train_and_deploy.py
