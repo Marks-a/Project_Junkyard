@@ -14,6 +14,45 @@
       <version>3.8.1</version>
       <scope>test</scope>
     </dependency>
+
+<dependency>
+        <groupId>org.lwjgl</groupId>
+        <artifactId>lwjgl</artifactId>
+        <version>3.3.3</version>
+    </dependency>
+
+   <dependency>
+        <groupId>org.lwjgl</groupId>
+        <artifactId>lwjgl-glfw</artifactId>
+        <version>3.3.3</version>
+    </dependency>
+
+      <dependency>
+        <groupId>org.lwjgl</groupId>
+        <artifactId>lwjgl-opengl</artifactId>
+        <version>3.3.3</version>
+    </dependency>
+
+<!-- Native libraries (Linux) -->
+    <dependency>
+        <groupId>org.lwjgl</groupId>
+        <artifactId>lwjgl</artifactId>
+        <version>3.3.3</version>
+        <classifier>natives-linux</classifier>
+    </dependency>
+    <dependency>
+        <groupId>org.lwjgl</groupId>
+        <artifactId>lwjgl-glfw</artifactId>
+        <version>3.3.3</version>
+        <classifier>natives-linux</classifier>
+    </dependency>
+    <dependency>
+        <groupId>org.lwjgl</groupId>
+        <artifactId>lwjgl-opengl</artifactId>
+        <version>3.3.3</version>
+        <classifier>natives-linux</classifier>
+    </dependency>
+
   </dependencies>
 
 <build>
@@ -26,6 +65,11 @@
                     <!-- Use the Java version installed on your system -->
                     <source>24</source>   <!-- or 24 if you’re running JDK 24 -->
                     <target>24</target>   <!-- match your JDK version -->
+                    <archive>
+                    <manifest>
+                    <mainClass>com.example.Main</mainClass>
+                   </manifest>
+                   </archive>
                 </configuration>
             </plugin>
         </plugins>

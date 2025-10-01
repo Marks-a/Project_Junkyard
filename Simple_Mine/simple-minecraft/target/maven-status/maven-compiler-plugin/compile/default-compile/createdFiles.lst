@@ -1,1 +1,6 @@
+com/example/engine/Renderer.class
+com/example/engine/Window.class
+com/example/player/Player.class
+com/example/world/World.class
 com/example/Main.class
+com/example/world/Block.class
