@@ -1,1 +1,0 @@
-savedcmd_/workspaces/Project/linux/kernalSpace/module1/module1.mod := printf '%s\n'   module1.o | awk '!x[$$0]++ { print("/workspaces/Project/linux/kernalSpace/module1/"$$0) }' > /workspaces/Project/linux/kernalSpace/module1/module1.mod
