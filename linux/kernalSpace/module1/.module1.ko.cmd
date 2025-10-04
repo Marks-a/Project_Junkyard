@@ -1,0 +1,1 @@
+savedcmd_/workspaces/Project/linux/kernalSpace/module1/module1.ko := ld -r -m elf_x86_64 -z noexecstack --no-warn-rwx-segments --build-id=sha1  -T scripts/module.lds -o /workspaces/Project/linux/kernalSpace/module1/module1.ko /workspaces/Project/linux/kernalSpace/module1/module1.o /workspaces/Project/linux/kernalSpace/module1/module1.mod.o

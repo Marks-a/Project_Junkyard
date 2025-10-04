@@ -1,0 +1,12 @@
+
+# Modules specific
+*.ko
+*.mod.c
+*.mod.o
+*.mod
+*.symvers
+*.order
+
+.*.*.cmd
+.*.cmd
+*.cmd

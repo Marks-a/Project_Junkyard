@@ -16,7 +16,7 @@ static void __exit goodbye(void) {
     pr_info("Goodbye, World!\n");
 }
 
-module_init(hello_init);
-module_exit(hello_exit);
+module_init(hello);
+module_exit(goodbye);
 
 
