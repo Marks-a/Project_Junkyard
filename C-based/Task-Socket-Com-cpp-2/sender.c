@@ -4,7 +4,6 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
-#define PORTNUM 8080
 int main(int argc, char **argv) {
     if (argc != 2) { printf("Usage: %s <dest-ip>\n", argv[0]); return 1; }
 
@@ -14,7 +13,7 @@ int main(int argc, char **argv) {
     struct sockaddr_in dest;
     memset(&dest, 0, sizeof(dest));
     dest.sin_family = AF_INET;
-    dest.sin_port = htons(PORTNUM);
+    dest.sin_port = htons(8080);
     if (inet_pton(AF_INET, argv[1], &dest.sin_addr) != 1) {
         fprintf(stderr,"Invalid address\n"); close(sock); return 1;
     }
@@ -23,7 +22,7 @@ int main(int argc, char **argv) {
     ssize_t sent = sendto(sock, msg, strlen(msg), 0, (struct sockaddr*)&dest, sizeof(dest));
     if (sent < 0) { perror("sendto"); close(sock); return 1; }
 
-    printf("Sent \"%s\" to %s:%d\n", msg, argv[1], PORTNUM);
+    printf("Sent \"%s\" to %s:8080\n", msg, argv[1]);
     close(sock);
     return 0;
 }

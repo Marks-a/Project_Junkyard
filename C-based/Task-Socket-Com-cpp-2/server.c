@@ -3,7 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#define PORTNUM 8080
+
 int main() {
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0)
@@ -13,7 +13,7 @@ int main() {
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr= htonl(INADDR_ANY);
-    addr.sin_port = htons(PORTNUM);
+    addr.sin_port = htons(8080);
 
     if (bind(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
         perror("bind"); close(sock); return 1;
@@ -23,7 +23,7 @@ int main() {
     struct sockaddr_in src;
     socklen_t srclen = sizeof(src);
 
-    printf("UDP server listening on port %d...\n", PORTNUM);
+    printf("UDP server listening on port 9000...\n");
     ssize_t n = recvfrom(sock, buf, sizeof(buf)-1, 0, (struct sockaddr*)&src, &srclen);
     if (n < 0) { perror("recvfrom"); close(sock); return 1; }
     buf[n] = '\0';
