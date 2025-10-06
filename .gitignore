@@ -9,3 +9,7 @@
 .*.*.cmd
 .*.cmd
 *.cmd
+
+build
+build/*
+CMakeFiles
