@@ -14,5 +14,5 @@ endif()
 find_package(SDL2 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
-add_executable(TestSDL2GLM main.cpp)
+add_executable(TestSDL2GLM ./src/core/main.cpp)
 target_link_libraries(TestSDL2GLM PRIVATE SDL2::SDL2)
