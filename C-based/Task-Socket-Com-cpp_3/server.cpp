@@ -6,6 +6,8 @@
 #include <sys/types.h> 
 #include <ifaddrs.h> 
 #include <arpa/inet.h> 
+#include <sys/ioctl.h>
+#include <net/if.h>
 
 struct localMachieneInfo {
     std::string name;
@@ -21,10 +23,12 @@ void get_local_machine_info() {
         return;
     }
     for (struct ifaddrs *iface = interfaces; iface != nullptr; iface = iface->ifa_next) { 
-        if (iface->ifa_addr->sa_family == AF_INET) { 
+        if (iface->ifa_addr->sa_family == AF_INET) {
+            if(iface->ifa_flags & IFF_LOOPBACK) continue;
             char ip[INET_ADDRSTRLEN]; 
             inet_ntop(AF_INET, &((struct sockaddr_in *)iface->ifa_addr)->sin_addr, ip, sizeof(ip)); 
-            std::cout << "Interface: " << iface->ifa_name << " IP Address: " << ip << std::endl; 
+            std::cout << "Interface: " << iface->ifa_name << " IP Address: " << ip << std::endl;
+
         } 
     } 
     freeifaddrs(interfaces); 
