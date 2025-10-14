@@ -9,13 +9,17 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+
+#define LOCATION "/tmp/server_socket"
+#define PORT 9180
 
 struct localMachineInfo {
     std::string name;
     std::string ip;
     std::string subnet;
     std::string mac;
-    int port;
 };
 
 void get_local_machine_info(std::vector<localMachineInfo> &infoList);
@@ -65,7 +69,38 @@ void get_mac_address(const std::string &interface_name , std::string &mac_addres
         mac_address = mac_str;
     }
 
-int main() {
+void open_local_socket() {
+    int local_socket = socket(AF_UNIX, SOCK_SEQPACKET, 0);
+    if(local_socket < 0) {
+        perror("socket");
+        return;
+    }
+    struct sockaddr_un server_addr;
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sun_family = AF_UNIX;
+    strncpy(server_addr.sun_path, LOCATION, sizeof(server_addr.sun_path) - 1);
+    unlink(LOCATION); // Remove any previous socket file
+    int ret = bind(local_socket, (struct sockaddr *)&server_addr, sizeof(server_addr));
+    if(ret < 0) {
+        perror("bind");
+        close(local_socket);
+        return;
+    }
+    ret = listen(local_socket, 5);
+    if(ret < 0) {
+        perror("listen");
+        close(local_socket);
+        return;
+    }
+    printf("Local socket listening at %s\n", LOCATION);
+
+
+}
+
+
+
+
+    int main() {
     printf("Getting info...\n");
     std::vector<localMachineInfo> infoList;
     get_local_machine_info(infoList);
@@ -74,6 +109,8 @@ int main() {
     for (const auto &info : infoList) {
         std::cout << "Interface: " << info.name << ", IP: " << info.ip << ", MAC: " << info.mac << std::endl;
     }
+    open_local_socket();
+
 
     return 0;
 }
