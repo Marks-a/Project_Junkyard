@@ -69,11 +69,11 @@ void get_mac_address(const std::string &interface_name , std::string &mac_addres
         mac_address = mac_str;
     }
 
-void open_local_socket() {
+int open_local_socket() {
     int local_socket = socket(AF_UNIX, SOCK_SEQPACKET, 0);
     if(local_socket < 0) {
         perror("socket");
-        return;
+        return -1;
     }
     struct sockaddr_un server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
@@ -84,21 +84,44 @@ void open_local_socket() {
     if(ret < 0) {
         perror("bind");
         close(local_socket);
-        return;
+        return -1;
     }
     ret = listen(local_socket, 5);
     if(ret < 0) {
         perror("listen");
         close(local_socket);
-        return;
+        return -1;
     }
     printf("Local socket listening at %s\n", LOCATION);
-
-
+    return local_socket;
 }
 
+void main_loop(const std::vector<localMachineInfo> &infoList) {
+    int local_socket = open_local_socket();
+    if (local_socket < 0) {
+        return;
+    }
 
+    while (true) {
+        printf("Waiting for client connection...\n");
+        int client_socket = accept(local_socket, nullptr, nullptr);
+        if (client_socket < 0) {
+            perror("accept");
+            continue;
+        }
+        ssize_t w = write(client_socket, infoList.data(), infoList.size() * sizeof(localMachineInfo));
+        if (w < 0) {
+            perror("write");
+        } else {
+            printf("Sent %zd bytes to client\n", w);
+        }
 
+        
+        close(client_socket);
+        unlink(LOCATION); 
+        exit(0);
+    }
+}
 
     int main() {
     printf("Getting info...\n");
@@ -109,8 +132,7 @@ void open_local_socket() {
     for (const auto &info : infoList) {
         std::cout << "Interface: " << info.name << ", IP: " << info.ip << ", MAC: " << info.mac << std::endl;
     }
-    open_local_socket();
-
+    main_loop(infoList);
 
     return 0;
 }
