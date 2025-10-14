@@ -104,16 +104,17 @@ void main_loop(const std::vector<localMachineInfo> &infoList) {
 
     while (true) {
         printf("Waiting for client connection...\n");
+        std::string message = "Ethernet :" + infoList[0].ip + " , " + infoList[0].mac + "\n";
         int client_socket = accept(local_socket, nullptr, nullptr);
         if (client_socket < 0) {
             perror("accept");
             continue;
         }
-        ssize_t w = write(client_socket, infoList.data(), infoList.size() * sizeof(localMachineInfo));
+        ssize_t w = write(client_socket, message.c_str(), message.size());
         if (w < 0) {
             perror("write");
         } else {
-            printf("Sent %zd bytes to client\n", w);
+            printf("sent %zd bytes to client\n", w);
         }
 
         
@@ -132,6 +133,7 @@ void main_loop(const std::vector<localMachineInfo> &infoList) {
     for (const auto &info : infoList) {
         std::cout << "Interface: " << info.name << ", IP: " << info.ip << ", MAC: " << info.mac << std::endl;
     }
+    printf("Size of infoList: %zu\n", infoList.size());
     main_loop(infoList);
 
     return 0;
