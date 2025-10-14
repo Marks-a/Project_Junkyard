@@ -110,6 +110,7 @@ void main_loop(const std::vector<localMachineInfo> &infoList) {
             perror("accept");
             continue;
         }
+        
         ssize_t w = write(client_socket, message.c_str(), message.size());
         if (w < 0) {
             perror("write");
