@@ -1,0 +1,3 @@
+/workspaces/Project/C-based/CPP_Rendering_Engine/build/build/CMakeFiles/TestSDL2GLM.dir
+/workspaces/Project/C-based/CPP_Rendering_Engine/build/build/CMakeFiles/edit_cache.dir
+/workspaces/Project/C-based/CPP_Rendering_Engine/build/build/CMakeFiles/rebuild_cache.dir

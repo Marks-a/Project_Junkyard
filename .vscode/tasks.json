@@ -1,0 +1,16 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build and Run Engine",
+      "type": "shell",
+      "command": "mkdir -p ./C-based/CPP_Rendering_Engine/build && cmake -S ./C-based/CPP_Rendering_Engine -B ./C-based/CPP_Rendering_Engine/build -DCMAKE_TOOLCHAIN_FILE=/home/vcpkg/scripts/buildsystems/vcpkg.cmake && cmake --build ./C-based/CPP_Rendering_Engine/build && ./C-based/CPP_Rendering_Engine/build/TestSDL2GLM",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [],
+      "detail": "Creates build folder, configures, builds, and runs the engine"
+    }
+  ]
+}

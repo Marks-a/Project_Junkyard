@@ -1,0 +1,1 @@
+/usr/bin/c++  -static-libgcc -static-libstdc++ -static CMakeFiles/TestSDL2GLM.dir/src/core/main.cpp.o -o TestSDL2GLM  /home/vcpkg/installed/x64-linux/debug/lib/libSDL2d.a -lm -pthread 

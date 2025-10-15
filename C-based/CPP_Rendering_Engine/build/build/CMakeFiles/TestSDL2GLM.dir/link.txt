@@ -1,0 +1,3 @@
+/usr/bin/cmake -E rm -f CMakeFiles/TestSDL2GLM.dir/objects.a
+/usr/bin/x86_64-w64-mingw32-ar qc CMakeFiles/TestSDL2GLM.dir/objects.a @CMakeFiles/TestSDL2GLM.dir/objects1.rsp
+/usr/bin/x86_64-w64-mingw32-g++  -static-libgcc -static-libstdc++ -static -O3 -DNDEBUG -mwindows -Wl,--whole-archive CMakeFiles/TestSDL2GLM.dir/objects.a -Wl,--no-whole-archive -o TestSDL2GLM.exe -Wl,--out-implib,libTestSDL2GLM.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles/TestSDL2GLM.dir/linkLibs.rsp

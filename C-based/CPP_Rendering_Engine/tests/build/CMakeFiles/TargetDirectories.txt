@@ -1,0 +1,3 @@
+/workspaces/Project/C-based/CPP_Rendering_Engine/tests/build/CMakeFiles/TestResultLightweightEngine.dir
+/workspaces/Project/C-based/CPP_Rendering_Engine/tests/build/CMakeFiles/edit_cache.dir
+/workspaces/Project/C-based/CPP_Rendering_Engine/tests/build/CMakeFiles/rebuild_cache.dir
