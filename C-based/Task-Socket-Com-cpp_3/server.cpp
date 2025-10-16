@@ -159,6 +159,41 @@ void broadcast_udp_neighbor(const localMachineInfo &info) {
     }
     close(udp_socket);
 }
+void listen_udp_neighbor() {
+    int listen_udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
+    if (listen_udp_socket < 0) {
+        perror("socket");
+        return;
+    }
+    struct sockaddr_in listenAddr;
+    memset(&listenAddr, 0, sizeof(listenAddr));
+    socklen_t addr_len = sizeof(listenAddr);
+    char buffer[1024];
+
+    listenAddr.sin_family = AF_INET;
+    listenAddr.sin_port = htons(PORT);
+    listenAddr.sin_addr.s_addr = INADDR_ANY;
+
+    if (bind(listen_udp_socket, (struct sockaddr*)&listenAddr, sizeof(listenAddr)) < 0) {
+        perror("bind");
+        exit(EXIT_FAILURE);
+    }
+
+    while (true) {
+        ssize_t recv_len = recvfrom(listen_udp_socket, buffer, sizeof(buffer) - 1, 0, (struct sockaddr*)&listenAddr, &addr_len);
+        if (recv_len < 0) {
+            perror("recvfrom");
+            continue;
+        }
+        buffer[recv_len] = '\0';
+        if(info.ip == std::string(inet_ntoa(listenAddr.sin_addr))) {
+            continue; 
+        }
+        printf("Received: %s\n", buffer);
+    }
+    close(listen_udp_socket);
+
+}
 
 
     int main() {
