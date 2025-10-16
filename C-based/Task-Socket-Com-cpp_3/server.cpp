@@ -21,6 +21,10 @@ struct localMachineInfo {
     std::string subnet;
     std::string mac;
 };
+struct neighbor{
+    std::string ip;
+    std::string mac;
+};
 
 void get_local_machine_info(std::vector<localMachineInfo> &infoList);
 void get_mac_address(const std::string &interface_name, std::string &mac_address);
@@ -36,10 +40,14 @@ void get_local_machine_info(std::vector<localMachineInfo> &infoList) {
             if(iface->ifa_flags & IFF_LOOPBACK) continue;
             char ip[INET_ADDRSTRLEN]; 
             inet_ntop(AF_INET, &((struct sockaddr_in *)iface->ifa_addr)->sin_addr, ip, sizeof(ip)); 
+            char subnet[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, &((struct sockaddr_in *)iface->ifa_netmask)->sin_addr, subnet, sizeof(subnet)); 
+
             std::cout << "Interface: " << iface->ifa_name << " IP Address: " << ip << std::endl;
             localMachineInfo info;       
             info.name = iface->ifa_name;
             info.ip = ip;
+            info.subnet = subnet;
             get_mac_address(iface->ifa_name, info.mac);
             infoList.push_back(info);
         } 
@@ -124,6 +132,10 @@ void main_loop(const std::vector<localMachineInfo> &infoList) {
         exit(0);
     }
 }
+void broadcast_udp_neighbor() {
+
+}
+
 
     int main() {
     printf("Getting info...\n");
@@ -132,7 +144,7 @@ void main_loop(const std::vector<localMachineInfo> &infoList) {
 
     printf("Info gathered:\n");
     for (const auto &info : infoList) {
-        std::cout << "Interface: " << info.name << ", IP: " << info.ip << ", MAC: " << info.mac << std::endl;
+        std::cout << "Interface: " << info.name << ", IP: " << info.ip << ", MAC: " << info.mac << ", Subnet: " << info.subnet << std::endl;
     }
     printf("Size of infoList: %zu\n", infoList.size());
     main_loop(infoList);
