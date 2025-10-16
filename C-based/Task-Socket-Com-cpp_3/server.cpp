@@ -28,7 +28,7 @@ struct neighbor{
 
 void get_local_machine_info(std::vector<localMachineInfo> &infoList);
 void get_mac_address(const std::string &interface_name, std::string &mac_address);
-
+// Main functions
 void get_local_machine_info(std::vector<localMachineInfo> &infoList) {
     struct ifaddrs *interfaces = nullptr; 
     if (getifaddrs(&interfaces) == -1) {
@@ -132,8 +132,32 @@ void main_loop(const std::vector<localMachineInfo> &infoList) {
         exit(0);
     }
 }
-void broadcast_udp_neighbor() {
-
+void broadcast_udp_neighbor(const localMachineInfo &info) {
+   // Note: this func needs to be loop through. (1 info)
+    int udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
+    struct sockaddr_in broadcastAddr;
+    if (udp_socket < 0) {
+        perror("socket");
+        return;
+    }
+    if (setsockopt(udp_socket, SOL_SOCKET, SO_BROADCAST, 1, sizeof(int)) < 0) {
+        perror("setsockopt");
+        exit(EXIT_FAILURE);
+    }
+    memset(&broadcastAddr, 0, sizeof(broadcastAddr));
+    broadcastAddr.sin_family = AF_INET;
+    broadcastAddr.sin_port = htons(PORT);
+    if (inet_pton(AF_INET, BROADCAST_ADDRESS, &broadcastAddr.sin_addr) <= 0) {
+        perror("inet_pton");
+        exit(EXIT_FAILURE);
+    }
+    std::string message = "Ethernet :" + info.ip + " , " + info.mac + "\n";
+    if(sendto(udp_socket, message.c_str(), message.size(), 0, (struct sockaddr *)&broadcastAddr, sizeof(broadcastAddr)) < 0) {
+        perror("sendto");
+    } else {
+        printf("Broadcasted: %s", message.c_str());
+    }
+    close(udp_socket);
 }
 
 
