@@ -170,6 +170,13 @@ int setup_udp_neighbor(int &udp_socket,const localMachineInfo &info) {
     // }
     // close(udp_socket);
 }
+sockaddr_in create_sockaddr_struct() {
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(PORT);
+    //addr.sin_addr.s_addr = INADDR_ANY;
+    return addr;
+}
 
 
     int main() {
