@@ -28,6 +28,7 @@ struct neighbor{
 
 void get_local_machine_info(std::vector<localMachineInfo> &infoList);
 void get_mac_address(const std::string &interface_name, std::string &mac_address);
+sockaddr_in create_sockaddr_struct();
 // Main functions
 void get_local_machine_info(std::vector<localMachineInfo> &infoList) {
     struct ifaddrs *interfaces = nullptr; 
@@ -150,9 +151,7 @@ int setup_udp_neighbor(int &udp_socket,const localMachineInfo &info) {
         return -1;
     }
 
-    sockaddr_in localAddr{};
-    localAddr.sin_family = AF_INET;
-    localAddr.sin_port = htons(PORT);
+    sockaddr_in localAddr = create_sockaddr_struct();
     localAddr.sin_addr.s_addr = INADDR_ANY;
 
    if (bind(udp_socket, (sockaddr *)&localAddr, sizeof(localAddr)) < 0) {

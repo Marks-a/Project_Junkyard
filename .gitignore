@@ -27,6 +27,7 @@ Makefile
 .idea/
 *.sln
 *.vcxproj*
+*.txt
 
 # OS junk
 .DS_Store
