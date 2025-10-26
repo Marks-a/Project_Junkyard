@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <poll.h>
+#include <chrono>
 
 #define LOCATION "/tmp/server_socket"
 #define PORT 9180
@@ -124,12 +125,16 @@ void main_loop(const std::vector<localMachineInfo> &infoList) {
     fds[1].fd = udp_socket;
     fds[1].events = POLLIN;
 
+    auto last_broadcast = std::chrono::steady_clock::now();
+    const auto broadcast_interval = std::chrono::seconds(5);
+
     while (true) {
-        int ret = poll(fds, 2, -1);
+        int ret = poll(fds, 2, 1000);
         if (ret < 0) {
             perror("poll");
             break;
         }
+       
         if(fds[0].revents & POLLIN) {
             // Need to send info in a loop.
             std::string message = "Ethernet :" + infoList[0].ip + " , " + infoList[0].mac + "\n";
@@ -143,10 +148,37 @@ void main_loop(const std::vector<localMachineInfo> &infoList) {
             else printf("sent %zd bytes to client\n", w);
             close(client_socket);
         }
-        if(!(fds[1].revents & POLLIN)) {
+        if(fds[1].revents & POLLIN) {
             // Need to send info broadcast in a loop (Multiple interface with multiple broadcast)
-            continue;
+            char buffer[1024];
+            sockaddr_in sender{};
+            socklen_t sender_len = sizeof(sender);
+            ssize_t n = recvfrom(udp_socket, buffer, sizeof(buffer) - 1, 0,
+                             (struct sockaddr *)&sender, &sender_len);
+            if (n > 0) {
+            buffer[n] = '\0';
+            printf("Received UDP from %s:%d — %s\n",
+                   inet_ntoa(sender.sin_addr), ntohs(sender.sin_port), buffer);
+            }
         }
+        auto now = std::chrono::steady_clock::now();
+        if (now - last_broadcast >= broadcast_interval) {
+        last_broadcast = now;
+        std::string m = "Broadcast: " + infoList[0].ip + " , " + infoList[0].mac + "\n";
+        for (const auto &info : infoList) {
+            sockaddr_in broadcastAddr{};
+            broadcastAddr.sin_family = AF_INET;
+            broadcastAddr.sin_port = htons(5000);
+            inet_pton(AF_INET, info.broadcast.c_str(), &broadcastAddr.sin_addr);
+
+            ssize_t sent = sendto(udp_socket, m.c_str(), m.size(), 0,
+                                  (struct sockaddr *)&broadcastAddr, sizeof(broadcastAddr));
+            if (sent < 0)
+                perror("sendto");
+            else
+                printf("Broadcasted %zd bytes to %s\n", sent, info.broadcast.c_str());
+        }
+    }
 
     }
     
