@@ -134,7 +134,6 @@ void main_loop(const std::vector<localMachineInfo> &infoList) {
             perror("poll");
             break;
         }
-       
         if(fds[0].revents & POLLIN) {
             // Need to send info in a loop.
             std::string message = "Ethernet :" + infoList[0].ip + " , " + infoList[0].mac + "\n";
@@ -168,7 +167,7 @@ void main_loop(const std::vector<localMachineInfo> &infoList) {
         for (const auto &info : infoList) {
             sockaddr_in broadcastAddr{};
             broadcastAddr.sin_family = AF_INET;
-            broadcastAddr.sin_port = htons(5000);
+            broadcastAddr.sin_port = htons(PORT);
             inet_pton(AF_INET, info.broadcast.c_str(), &broadcastAddr.sin_addr);
 
             ssize_t sent = sendto(udp_socket, m.c_str(), m.size(), 0,
@@ -179,20 +178,12 @@ void main_loop(const std::vector<localMachineInfo> &infoList) {
                 printf("Broadcasted %zd bytes to %s\n", sent, info.broadcast.c_str());
         }
     }
-
-    }
-    
+}
     unlink(LOCATION);
     close(local_socket); 
     close(udp_socket);
     exit(0);
-    // std::string message = "Ethernet :" + info.ip + " , " + info.mac + "\n";
-    // if(sendto(udp_socket, message.c_str(), message.size(), 0, (struct sockaddr *)&broadcastAddr, sizeof(broadcastAddr)) < 0) {
-    //     perror("sendto");
-    // } else {
-    //     printf("Broadcasted: %s", message.c_str());
-    // }
-    // close(udp_socket);
+  
 }
 int setup_udp_neighbor(int &udp_socket) {
     udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
@@ -215,7 +206,7 @@ int setup_udp_neighbor(int &udp_socket) {
     }
 
     sockaddr_in localAddr = create_sockaddr_struct();
-    localAddr.sin_addr.s_addr = INADDR_ANY;
+    localAddr.sin_addr.s_addr = htons(INADDR_ANY);
 
    if (bind(udp_socket, (sockaddr *)&localAddr, sizeof(localAddr)) < 0) {
         perror("bind");
