@@ -16,7 +16,7 @@
 
 #define LOCATION "/tmp/server_socket"
 #define PORT 9180
-
+#define BUFFER_SIZE 1024
 struct localMachineInfo {
     std::string name;
     std::string ip;
@@ -149,13 +149,17 @@ void main_loop(const std::vector<localMachineInfo> &infoList) {
         }
         if(fds[1].revents & POLLIN) {
             // Need to send info broadcast in a loop (Multiple interface with multiple broadcast)
-            char buffer[1024];
+            char buffer[BUFFER_SIZE];
             sockaddr_in sender{};
             socklen_t sender_len = sizeof(sender);
             ssize_t n = recvfrom(udp_socket, buffer, sizeof(buffer) - 1, 0,
                              (struct sockaddr *)&sender, &sender_len);
             if (n > 0) {
             buffer[n] = '\0';
+            if(sender.sin_addr.s_addr == inet_addr(infoList[0].ip.c_str())) {
+               std::cout << "Received own broadcast, ignoring." << std::endl;
+                continue;
+            }
             printf("Received UDP from %s:%d — %s\n",
                    inet_ntoa(sender.sin_addr), ntohs(sender.sin_port), buffer);
             }
