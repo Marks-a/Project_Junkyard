@@ -26,6 +26,7 @@ struct localMachineInfo {
 struct neighbor{
     std::string ip;
     std::string mac;
+    std::chrono::steady_clock::time_point last_seen;
 };
 
 void get_local_machine_info(std::vector<localMachineInfo> &infoList);
@@ -109,7 +110,7 @@ int open_local_socket() {
     return local_socket;
 }
 
-void main_loop(const std::vector<localMachineInfo> &infoList) {
+void main_loop(std::vector<localMachineInfo> &infoList, std::vector<neighbor> &neighborList) {
     int local_socket = open_local_socket();
     if (local_socket < 0) {
         return;
@@ -162,8 +163,22 @@ void main_loop(const std::vector<localMachineInfo> &infoList) {
             }
             printf("Received UDP from %s:%d — %s\n",
                    inet_ntoa(sender.sin_addr), ntohs(sender.sin_port), buffer);
+          ??  for(const auto &nb : neighborList) {
+                if(nb.ip == inet_ntoa(sender.sin_addr)) {
+                    std::cout << "Neighbor " << nb.ip << " already in list." << std::endl;
+                    continue;
+                }
             }
+            neighbor nb;
+            nb.ip = inet_ntoa(sender.sin_addr);
+            nb.mac = std::string(buffer);
+            nb.last_seen = std::chrono::steady_clock::now();
+            neighborList.push_back(nb);
+            std::cout << "Added neighbor: " << nb.ip << " , " << nb.mac << std::endl;
         }
+    }
+
+
         auto now = std::chrono::steady_clock::now();
         if (now - last_broadcast >= broadcast_interval) {
         last_broadcast = now;
@@ -230,6 +245,7 @@ sockaddr_in create_sockaddr_struct() {
 int main() {
     printf("Getting info...\n");
     std::vector<localMachineInfo> infoList;
+    std::vector<neighbor> neighborList;
     get_local_machine_info(infoList);
 
     printf("Info gathered:\n");
@@ -237,6 +253,6 @@ int main() {
         std::cout << "Interface: " << info.name << ", IP: " << info.ip << ", MAC: " << info.mac << ",broadcast: " << info.broadcast << std::endl;
     }
     printf("Size of infoList: %zu\n", infoList.size());
-    main_loop(infoList);
+    main_loop(infoList, neighborList);
     return 0;
 }
