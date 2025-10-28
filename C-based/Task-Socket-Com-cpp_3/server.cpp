@@ -17,6 +17,7 @@
 #define LOCATION "/tmp/server_socket"
 #define PORT 9180
 #define BUFFER_SIZE 1024
+#define MAX_NO_REPLY 30
 struct localMachineInfo {
     std::string name;
     std::string ip;
@@ -149,7 +150,6 @@ void main_loop(std::vector<localMachineInfo> &infoList, std::vector<neighbor> &n
             close(client_socket);
         }
         if(fds[1].revents & POLLIN) {
-            // Need to send info broadcast in a loop (Multiple interface with multiple broadcast)
             char buffer[BUFFER_SIZE];
             sockaddr_in sender{};
             socklen_t sender_len = sizeof(sender);
@@ -157,24 +157,50 @@ void main_loop(std::vector<localMachineInfo> &infoList, std::vector<neighbor> &n
                              (struct sockaddr *)&sender, &sender_len);
             if (n > 0) {
             buffer[n] = '\0';
-            if(sender.sin_addr.s_addr == inet_addr(infoList[0].ip.c_str())) {
-               std::cout << "Received own broadcast, ignoring." << std::endl;
-                continue;
+            std::string sender_ip = inet_ntoa(sender.sin_addr);
+            uint16_t sender_port = ntohs(sender.sin_port);
+
+             printf("Received UDP from %s:%d — %s\n",
+               sender_ip.c_str(), sender_port, buffer);
+
+
+
+
+            bool is_own = false;
+            for (const auto &info : infoList) {
+            if (info.ip == sender_ip) {
+                std::cout << "Received own broadcast, ignoring." << std::endl;
+                is_own = true;
+                break;
             }
-            printf("Received UDP from %s:%d — %s\n",
-                   inet_ntoa(sender.sin_addr), ntohs(sender.sin_port), buffer);
-          ??  for(const auto &nb : neighborList) {
-                if(nb.ip == inet_ntoa(sender.sin_addr)) {
-                    std::cout << "Neighbor " << nb.ip << " already in list." << std::endl;
-                    continue;
+        }
+            if (is_own) continue;
+
+
+            bool found = false;
+        for (auto &nb : neighborList) {
+            if (nb.ip == sender_ip) {
+                if (std::chrono::steady_clock::now() - nb.last_seen <= std::chrono::seconds(MAX_NO_REPLY)) {
+                    std::cout << "Neighbor " << nb.ip << " already in list and not timed out." << std::endl;
+                } else {
+                    std::cout << "Neighbor " << nb.ip << " was timed out — refreshing entry." << std::endl;
                 }
+
+                nb.last_seen = std::chrono::steady_clock::now();
+                found = true;
+                break;
             }
-            neighbor nb;
-            nb.ip = inet_ntoa(sender.sin_addr);
-            nb.mac = std::string(buffer);
-            nb.last_seen = std::chrono::steady_clock::now();
-            neighborList.push_back(nb);
-            std::cout << "Added neighbor: " << nb.ip << " , " << nb.mac << std::endl;
+        }
+        if (!found) {
+            neighbor new_nb;
+            new_nb.ip = sender_ip;
+            new_nb.mac = std::string(buffer);
+            new_nb.last_seen = std::chrono::steady_clock::now();
+
+            neighborList.push_back(new_nb);
+            std::cout << "Added neighbor: " << new_nb.ip << " , " << new_nb.mac << std::endl;
+        }
+            std::cout << "Ended processing UDP packet." << std::endl;
         }
     }
 
