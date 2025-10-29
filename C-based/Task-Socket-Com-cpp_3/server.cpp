@@ -138,13 +138,17 @@ void main_loop(std::vector<localMachineInfo> &infoList, std::vector<neighbor> &n
         }
         if(fds[0].revents & POLLIN) {
             // Need to send info in a loop.
-            std::string message = "Ethernet :" + infoList[0].ip + " , " + infoList[0].mac + "\n";
+            std::string messages;
+            for(auto &nb : neighborList) {
+                std::string m = "Neighbors: " + nb.ip + ", " + nb.mac + "\n";
+                messages += m;
+            }
             int client_socket = accept(local_socket, nullptr, nullptr);
             if (client_socket < 0) {
                     perror("accept");
                     continue;
                 }
-            ssize_t w = write(client_socket, message.c_str(), message.size());
+            ssize_t w = write(client_socket, messages.c_str(), messages.size());
             if (w < 0) perror("write");
             else printf("sent %zd bytes to client\n", w);
             close(client_socket);
@@ -163,14 +167,11 @@ void main_loop(std::vector<localMachineInfo> &infoList, std::vector<neighbor> &n
              printf("Received UDP from %s:%d — %s\n",
                sender_ip.c_str(), sender_port, buffer);
 
-
-
-
             bool is_own = false;
             for (const auto &info : infoList) {
             if (info.ip == sender_ip) {
                 std::cout << "Received own broadcast, ignoring." << std::endl;
-                is_own = true;
+                is_own = false;
                 break;
             }
         }
@@ -178,7 +179,7 @@ void main_loop(std::vector<localMachineInfo> &infoList, std::vector<neighbor> &n
 
 
             bool found = false;
-        for (auto &nb : neighborList) {
+            for (auto &nb : neighborList) {
             if (nb.ip == sender_ip) {
                 if (std::chrono::steady_clock::now() - nb.last_seen <= std::chrono::seconds(MAX_NO_REPLY)) {
                     std::cout << "Neighbor " << nb.ip << " already in list and not timed out." << std::endl;
@@ -194,11 +195,12 @@ void main_loop(std::vector<localMachineInfo> &infoList, std::vector<neighbor> &n
         if (!found) {
             neighbor new_nb;
             new_nb.ip = sender_ip;
-            new_nb.mac = std::string(buffer);
+            size_t comma_pos = std::string(buffer).find(',');
+            new_nb.mac = std::string(buffer).substr(comma_pos + 1);
             new_nb.last_seen = std::chrono::steady_clock::now();
 
             neighborList.push_back(new_nb);
-            std::cout << "Added neighbor: " << new_nb.ip << " , " << new_nb.mac << std::endl;
+            std::cout << "Added neighbor: " << new_nb.ip << ", " << new_nb.mac << std::endl;
         }
             std::cout << "Ended processing UDP packet." << std::endl;
         }

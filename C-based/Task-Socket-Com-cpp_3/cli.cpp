@@ -24,7 +24,6 @@ int main()
     }
     memset(&addr, 0, sizeof(addr));
 
-    /* Connect socket to socket address. */
     addr.sun_family = AF_UNIX;
     strncpy(addr.sun_path, SOCKET_NAME, sizeof(addr.sun_path) - 1);
     ret = connect(data_socket, (const struct sockaddr *) &addr, sizeof(addr));
@@ -33,7 +32,6 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    /* Only receive message from server */
     r = read(data_socket, buffer, sizeof(buffer));
     if (r == -1) {
         perror("read");
