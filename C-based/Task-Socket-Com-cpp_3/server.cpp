@@ -33,6 +33,8 @@ struct neighbor{
 void get_local_machine_info(std::vector<localMachineInfo> &infoList);
 void get_mac_address(const std::string &interface_name, std::string &mac_address);
 sockaddr_in create_sockaddr_struct();
+void AddDummyInterfaces(std::vector<localMachineInfo> &infoList);
+void AddDummyNeighbors(std::vector<neighbor> &neighborList);
 int setup_udp_neighbor(int &udp_socket);
 // Main functions
 void get_local_machine_info(std::vector<localMachineInfo> &infoList) {
@@ -279,6 +281,8 @@ int main() {
     for (const auto &info : infoList) {
         std::cout << "Interface: " << info.name << ", IP: " << info.ip << ", MAC: " << info.mac << ",broadcast: " << info.broadcast << std::endl;
     }
+    AddDummyInterfaces(infoList);
+    AddDummyNeighbors(neighborList);
     printf("Size of infoList: %zu\n", infoList.size());
     main_loop(infoList, neighborList);
     return 0;
