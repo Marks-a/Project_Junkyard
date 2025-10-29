@@ -28,7 +28,9 @@ Makefile
 *.sln
 *.vcxproj*
 *.txt
-
+.devcontainer/
+.devcontainer
+.vscode
 # OS junk
 .DS_Store
 Thumbs.db
