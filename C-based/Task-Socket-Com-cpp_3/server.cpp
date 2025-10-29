@@ -283,3 +283,18 @@ int main() {
     main_loop(infoList, neighborList);
     return 0;
 }
+
+void AddDummyInterfaces(std::vector<localMachineInfo> &infoList) {
+    localMachineInfo info1;
+    info1.name = "eth0";
+    info1.ip = "192.168.1.2";
+    info1.broadcast = "192.168.1.255";
+    info1.mac = "AA:BB:CC:DD:EE:01";
+    infoList.push_back(info1);
+};
+void AddDummyNeighbors(std::vector<neighbor> &neighborList) {
+    neighbor nb1;
+    nb1.ip = "192.168.1.3";
+    nb1.mac = "AA:BB:CC:DD:EE:02";
+    neighborList.push_back(nb1);
+};
