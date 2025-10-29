@@ -171,7 +171,7 @@ void main_loop(std::vector<localMachineInfo> &infoList, std::vector<neighbor> &n
             for (const auto &info : infoList) {
             if (info.ip == sender_ip) {
                 std::cout << "Received own broadcast, ignoring." << std::endl;
-                is_own = false;
+                is_own = false; // Should be true to skip adding self
                 break;
             }
         }
@@ -198,7 +198,6 @@ void main_loop(std::vector<localMachineInfo> &infoList, std::vector<neighbor> &n
             size_t comma_pos = std::string(buffer).find(',');
             new_nb.mac = std::string(buffer).substr(comma_pos + 1);
             new_nb.last_seen = std::chrono::steady_clock::now();
-
             neighborList.push_back(new_nb);
             std::cout << "Added neighbor: " << new_nb.ip << ", " << new_nb.mac << std::endl;
         }
@@ -210,11 +209,11 @@ void main_loop(std::vector<localMachineInfo> &infoList, std::vector<neighbor> &n
         auto now = std::chrono::steady_clock::now();
         if (now - last_broadcast >= broadcast_interval) {
         last_broadcast = now;
-        std::string m = "Broadcast: " + infoList[0].ip + " , " + infoList[0].mac + "\n";
-        for (const auto &info : infoList) {
-            sockaddr_in broadcastAddr{};
-            broadcastAddr.sin_family = AF_INET;
-            broadcastAddr.sin_port = htons(PORT);
+            for (const auto &info : infoList) {
+                std::string m = "Broadcast: " + info.ip + ", " + info.mac + "\n";
+                sockaddr_in broadcastAddr{};
+                broadcastAddr.sin_family = AF_INET;
+                broadcastAddr.sin_port = htons(PORT);
             inet_pton(AF_INET, info.broadcast.c_str(), &broadcastAddr.sin_addr);
 
             ssize_t sent = sendto(udp_socket, m.c_str(), m.size(), 0,
