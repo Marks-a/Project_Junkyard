@@ -9,3 +9,30 @@
 .*.*.cmd
 .*.cmd
 *.cmd
+
+build
+build/*
+CMakeFiles
+bin/
+out/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# IDEs
+.vscode/
+.idea/
+*.sln
+*.vcxproj*
+*.txt
+.devcontainer/
+.devcontainer
+.vscode
+# OS junk
+.DS_Store
+Thumbs.db
+
+*.File
