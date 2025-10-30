@@ -17,7 +17,7 @@
 #define LOCATION "/tmp/server_socket"
 #define PORT 9180
 #define BUFFER_SIZE 1024
-#define MAX_NO_REPLY 30
+#define MAX_NO_REPLY 15
 struct localMachineInfo {
     std::string name;
     std::string ip;
@@ -173,7 +173,7 @@ void main_loop(std::vector<localMachineInfo> &infoList, std::vector<neighbor> &n
             for (const auto &info : infoList) {
             if (info.ip == sender_ip) {
                 std::cout << "Received own broadcast, ignoring." << std::endl;
-                is_own = false; // Should be true to skip adding self
+                is_own = true; 
                 break;
             }
         }
@@ -206,6 +206,15 @@ void main_loop(std::vector<localMachineInfo> &infoList, std::vector<neighbor> &n
             std::cout << "Ended processing UDP packet." << std::endl;
         }
     }
+
+        for(auto it = neighborList.begin(); it != neighborList.end(); ) {
+            if (std::chrono::steady_clock::now() - it->last_seen > std::chrono::seconds(MAX_NO_REPLY)) {
+                std::cout << "Neighbor " << it->ip << " timed out — removing from list." << std::endl;
+                it = neighborList.erase(it);
+            } else {
+                ++it;
+            }
+        }
 
 
         auto now = std::chrono::steady_clock::now();
@@ -300,5 +309,6 @@ void AddDummyNeighbors(std::vector<neighbor> &neighborList) {
     neighbor nb1;
     nb1.ip = "192.168.1.3";
     nb1.mac = "AA:BB:CC:DD:EE:02";
+    nb1.last_seen = std::chrono::steady_clock::now();
     neighborList.push_back(nb1);
 };
